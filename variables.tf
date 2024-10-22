@@ -32,8 +32,15 @@ variable "names" {
 }
 
 variable "project_roles" {
-  type        = list(string)
-  description = "Common roles to apply to all service accounts, project=>role as elements."
+  type = list(object({
+    name = string
+    condition = optional(object({
+      title       = string
+      description = optional(string, "")
+      expression  = string
+    }))
+  }))
+  description = "Common roles with an optional condition to apply to all service accounts, project=>role as elements."
   default     = []
 }
 

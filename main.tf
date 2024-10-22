@@ -25,10 +25,11 @@ locals {
   names                 = toset(var.names)
   name_role_pairs       = setproduct(local.names, toset(var.project_roles))
   project_roles_map_data = zipmap(
-    [for pair in local.name_role_pairs : "${pair[0]}-${pair[1]}"],
+    [for pair in local.name_role_pairs : "${pair[0]}-${pair[1].name}"],
     [for pair in local.name_role_pairs : {
       name = pair[0]
-      role = pair[1]
+      role = pair[1].name
+      condition = pair[1].condition
     }]
   )
 }
@@ -63,6 +64,15 @@ resource "google_project_iam_member" "project-roles" {
   )
 
   member = "serviceAccount:${google_service_account.service_accounts[each.value.name].email}"
+
+  dynamic "condition" {
+    for_each = each.value.condition != null ? [each.value.condition] : []
+    content {
+      title = condition.value.title
+      description = condition.value.description
+      expression = condition.value.expression
+    }
+  }
 }
 
 # conditionally assign billing user role at the org level
